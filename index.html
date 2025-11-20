@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexTech Industries | Soluciones Dinámicas</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #f5f5f7; /* Gris Apple */
+            --text-primary: #1d1d1f;
+            --text-secondary: #86868b;
+            --accent-blue: #0071e3;
+            --card-bg: rgba(255, 255, 255, 0.8);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            overflow-x: hidden; /* Evitar scroll horizontal */
+        }
+
+        /* CANVAS 3D FIJO AL FONDO */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: -1;
+            pointer-events: none; /* Permite scrollear sobre él */
+            transition: opacity 0.5s ease;
+        }
+
+        /* NAVEGACIÓN */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 5%;
+            background: rgba(245, 245, 247, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+
+        .logo-svg { height: 30px; width: auto; }
+
+        /* CONTENEDOR PRINCIPAL */
+        .content-wrapper {
+            position: relative;
+            z-index: 10;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* SECCIONES */
+        section {
+            min-height: 100vh; /* Cada sección ocupa al menos toda la pantalla */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 80px 0;
+            opacity: 0.4; /* Efecto focus: inician semitransparentes */
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        section.active {
+            opacity: 1; /* Al llegar a ellas se iluminan */
+            transform: translateY(0);
+        }
+
+        /* TIPOGRAFÍA ESTILO APPLE */
+        h1 {
+            font-size: clamp(3rem, 8vw, 5rem);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.05;
+            margin-bottom: 20px;
+            background: linear-gradient(180deg, #1d1d1f 0%, #424245 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+            letter-spacing: -0.01em;
+        }
+
+        p {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            max-width: 700px;
+        }
+
+        /* TARJETAS TÉCNICAS */
+        .tech-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+            border: 1px solid rgba(255,255,255,0.5);
+            margin-top: 30px;
+        }
+
+        .req-list {
+            list-style: none;
+            margin: 20px 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .req-list li {
+            padding-left: 20px;
+            position: relative;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .req-list li::before {
+            content: '•';
+            color: var(--accent-blue);
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        /* BLOQUES DE CÓDIGO / FÓRMULAS */
+        .code-block {
+            background: #fbfbfd;
+            border: 1px solid #d2d2d7;
+            border-radius: 12px;
+            padding: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: #333;
+            margin-top: 15px;
+            overflow-x: auto;
+        }
+
+        .variable { color: #d63384; }
+        .operator { color: #0071e3; }
+        .comment { color: #86868b; display: block; margin-bottom: 5px; margin-top: 10px;}
+
+        /* BOTÓN PRINCIPAL */
+        .btn-main {
+            display: inline-block;
+            background: var(--accent-blue);
+            color: white;
+            padding: 15px 40px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            margin-top: 30px;
+        }
+
+        .btn-main:hover {
+            background: #0077ed;
+            transform: scale(1.02);
+            box-shadow: 0 10px 20px rgba(0, 113, 227, 0.3);
+        }
+
+        /* EQUIPO */
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 40px;
+        }
+        
+        .team-member {
+            text-align: left;
+            padding: 20px;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .team-member h4 { font-size: 1.1rem; color: var(--text-primary); }
+        .team-member span { font-size: 0.9rem; color: var(--text-secondary); display: block; margin-top: 5px; }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            h1 { font-size: 3rem; }
+            h2 { font-size: 2rem; }
+            .team-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo-container">
+            <svg class="logo-svg" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M25 2L45 12V38L25 48L5 38V12L25 2Z" stroke="#1d1d1f" stroke-width="3" fill="none"/>
+                <path d="M18 33V17L32 33V17" stroke="#0071e3" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>NexTech Industries</span>
+        </div>
+        <div style="font-size: 0.8rem; color: #86868b; font-weight: 600;">EST. 2025</div>
+    </nav>
+
+    <div id="canvas-container"></div>
+
+    <div class="content-wrapper">
+
+        <section id="intro" class="active">
+            <p style="color: var(--accent-blue); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px;">Ingeniería Dinámica</p>
+            <h1>Innovación en<br>Movimiento.</h1>
+            <p>Desarrollamos soluciones de simulación de alta fidelidad para la industria del futuro. Validamos la física antes de construir la realidad.</p>
+            
+            <a href="https://emma35015-lgtm.github.io/NexTech-Industries/" class="btn-main">
+                Ver Proyecto Principal
+            </a>
+            
+            <div style="margin-top: 60px; border-left: 3px solid var(--accent-blue); padding-left: 20px;">
+                <p style="font-size: 1rem;"><strong>NexTech Industries</strong> lidera la creación de gemelos digitales en León, Guanajuato. Transformamos ecuaciones complejas en herramientas visuales para la toma de decisiones críticas en planta.</p>
+            </div>
+        </section>
+
+        <section id="case1">
+            <div class="tech-card">
+                <span style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary);">Caso de Estudio 01</span>
+                <h2>Optimización de Línea de Empaque</h2>
+                <p><strong>PackTech Solutions</strong> enfrenta problemas de colisiones entre productos en su línea de empaque automatizada. Los impactos causan daños y retrasos.</p>
+                
+                <h3 style="font-size: 1.2rem; margin-top: 30px;">Requerimientos Técnicos</h3>
+                <ul class="req-list">
+                    <li>Modelación de choques oblicuos</li>
+                    <li>Coeficiente de restitución configurable</li>
+                    <li>Conservación de momento lineal</li>
+                    <li>Visualización de vectores de velocidad</li>
+                </ul>
+
+                <div class="code-block">
+                    <span class="comment"># Conservación de momento lineal</span>
+                    <span class="variable">m1</span>*v1i + <span class="variable">m2</span>*v2i = <span class="variable">m1</span>*v1f + <span class="variable">m2</span>*v2f
+                    <br><br>
+                    <span class="comment"># Coeficiente de restitución (e)</span>
+                    <span class="variable">e</span> = -(v2f - v1f) <span class="operator">/</span> (v2i - v1i)
+                </div>
+            </div>
+        </section>
+
+        <section id="case2">
+            <div class="tech-card">
+                <span style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary);">Caso de Estudio 02</span>
+                <h2>Análisis de Movimiento de Maquinaria</h2>
+                <p><strong>RoboIndustrial</strong> necesita mejorar la eficiencia de movimiento de sus brazos robóticos. Requieren análisis de cinemática para optimizar trayectorias y reducir tiempos de ciclo.</p>
+
+                <h3 style="font-size: 1.2rem; margin-top: 30px;">Requerimientos Técnicos</h3>
+                <ul class="req-list">
+                    <li>Modelar movimiento del brazo (2DOF)</li>
+                    <li>Calcular velocidades y aceleraciones</li>
+                    <li>Visualización de vectores angulares</li>
+                    <li>Detección de puntos de singularidad</li>
+                </ul>
+
+                <div class="code-block">
+                    <span class="comment"># Velocidad Angular</span>
+                    <span class="variable">ω</span> = dθ/dt
+                    <br><br>
+                    <span class="comment"># Aceleración en movimiento general</span>
+                    <span class="variable">a_rot</span> = α × r
+                    <br>
+                    <span class="variable">a_cor</span> = 2ω × v_rel
+                </div>
+            </div>
+        </section>
+
+        <section id="team">
+            <h2>Nuestro Equipo</h2>
+            <p>Ingenieros detrás de la simulación.</p>
+            <div class="team-grid">
+                <div class="team-member">
+                    <h4>Regina Elorza</h4>
+                    <span>Gestión de Proyecto</span>
+                </div>
+                <div class="team-member">
+                    <h4>Jessica Anahí</h4>
+                    <span>Análisis de Datos</span>
+                </div>
+                <div class="team-member">
+                    <h4>Regina Rocha González</h4>
+                    <span>Simulación Física</span>
+                </div>
+                <div class="team-member">
+                    <h4>Emmanuel Juárez Del Río</h4>
+                    <span>Desarrollo Técnico</span>
+                </div>
+            </div>
+            <footer style="margin-top: 50px; font-size: 0.8rem; color: #ccc;">
+                © 2025 NexTech Industries. León, Guanajuato.
+            </footer>
+        </section>
+
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // --- CONFIGURACIÓN ESCENA 3D ---
+        const scene = new THREE.Scene();
+        // Color de fondo blanco sutil para integrar con la web
+        scene.background = new THREE.Color(0xf5f5f7); 
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // --- OBJETO CENTRAL (El "Núcleo" NexTech) ---
+        // Usamos un Icosaedro con estructura de alambre (Wireframe) elegante
+        const geometry = new THREE.IcosahedronGeometry(2.5, 1);
+        
+        // Material azul técnico estilo Apple
+        const material = new THREE.MeshBasicMaterial({ 
+            color: 0x0071e3, 
+            wireframe: true,
+            transparent: true,
+            opacity: 0.3
+        });
+        
+        const core = new THREE.Mesh(geometry, material);
+        scene.add(core);
+
+        // Añadimos un núcleo sólido interior más pequeño
+        const innerGeo = new THREE.IcosahedronGeometry(1, 0);
+        const innerMat = new THREE.MeshBasicMaterial({ color: 0x1d1d1f, wireframe: true });
+        const innerCore = new THREE.Mesh(innerGeo, innerMat);
+        core.add(innerCore); // Hijo del núcleo grande
+
+        camera.position.z = 6;
+
+        // --- LÓGICA DE SCROLL (La magia estilo Apple) ---
+        let scrollY = 0;
+
+        window.addEventListener('scroll', () => {
+            scrollY = window.scrollY;
+            
+            // 1. Detectar secciones para activar efecto "focus"
+            const sections = document.querySelectorAll('section');
+            sections.forEach(sec => {
+                const rect = sec.getBoundingClientRect();
+                // Si la sección está en medio de la pantalla
+                if(rect.top < window.innerHeight * 0.7 && rect.bottom > window.innerHeight * 0.3) {
+                    sec.classList.add('active');
+                } else {
+                    sec.classList.remove('active');
+                }
+            });
+        });
+
+        // --- ANIMACIÓN ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // La rotación depende DIRECTAMENTE del scroll (Scrollytelling)
+            // Factor 0.002 suaviza la velocidad
+            
+            // Rotación base constante (muy lenta, para que no parezca muerto)
+            core.rotation.x += 0.0005;
+            core.rotation.y += 0.001;
+
+            // Rotación interactiva con el scroll
+            // Al bajar, el objeto gira. Si paras, deja de girar rápido.
+            const targetRotation = scrollY * 0.002;
+            
+            // Interpolación suave (Lerp) para que no sea brusco
+            core.rotation.y += (targetRotation - core.rotation.y) * 0.05;
+            core.rotation.x += (targetRotation * 0.5 - core.rotation.x) * 0.05;
+
+            // Transformación según la sección (Efecto visual)
+            // Si bajamos mucho (Sección robótica), inclinamos el objeto
+            if (scrollY > 800) {
+                innerCore.scale.setScalar(1.5); // El núcleo crece
+            } else {
+                innerCore.scale.setScalar(1);
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // Responsive
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>
